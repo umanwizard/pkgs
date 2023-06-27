@@ -1,0 +1,12 @@
+diff --git a/rldefs.h b/rldefs.h
+index ec3c64a..b47df55 100644
+--- a/rldefs.h
++++ b/rldefs.h
+@@ -29,6 +29,7 @@
+ #endif
+ 
+ #include "rlstdc.h"
++#include "rlmbutil.h"
+ 
+ #if defined (STRCOLL_BROKEN)
+ #  undef HAVE_STRCOLL
