@@ -17,10 +17,8 @@
               (method git-fetch)
               (uri (git-reference
                     (url "https://git.savannah.gnu.org/git/readline.git")
-                    (commit "e5554d06e0abb52a6d56bba0e9f155aa02643274")))
+                    (commit "9f177ebb2be58e07a4e437e4b885411ae2017114")))
               (sha256
                (base32
-                "0z69h5almagnc7jm9zqkgnx1wsq9zdwaaf6awrr0h2hrhbfwrld6"))
-              (patches (search-patches "readline-include-order.patch"))
-              (patch-flags '("-p1"))
+                "1lqpz844gkbw573z80syr2wn90fv9i62q7ydc29y7a02c35dahvn"))
               ))))
