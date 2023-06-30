@@ -28,11 +28,31 @@
                          "vendor/tikv-jemalloc-sys/jemalloc"))
              ;; Also remove the bundled (mostly Windows) libraries.
              (for-each delete-file
-                       (find-files "vendor" ".*\\.(a|dll|exe|lib)$")))))))))
+                       (find-files "vendor" ".*\\.(a|dll|exe|lib)$"))
+             )))))))
 
 (define rust-1.70
-  (rust-bootstrapped-package
-   rust-1.69 "1.70.0" "0z6j7d0ni0rmfznv0w3mrf882m11kyh51g2bxkj40l3s1c0axgxj"))
+  (let ((p (rust-bootstrapped-package
+            rust-1.69 "1.70.0" "0z6j7d0ni0rmfznv0w3mrf882m11kyh51g2bxkj40l3s1c0axgxj")))
+    (package
+      (inherit p)      
+      (arguments
+       (substitute-keyword-arguments (package-arguments p)
+         ((#:phases phases)
+          `(modify-phases ,phases
+             ;; Rustix ships with some bundled assembly-language
+             ;; libraries. We strip the pre-assembled versions from
+             ;; the sources, so regenerate them here.
+             (add-after 'configure 'assemble-rustix-outline-asm
+               (lambda _
+                 (for-each
+                  (lambda (dir)
+                    (with-directory-excursion dir
+                      (invoke "gcc" "-c" "x86_64.s")
+                      (invoke "ar" "r" "debug/librustix_outline_x86_64.a" "x86_64.o")
+                      (invoke "ar" "r" "release/librustix_outline_x86_64.a" "x86_64.o")))
+                  '("vendor/rustix-0.36.5/src/backend/linux_raw/arch/outline/"
+                    "vendor/rustix/src/backend/linux_raw/arch/outline/")))))))))))
 
 (define (mk-public-rust base-rust)
   (package
@@ -202,21 +222,28 @@
                           (package-native-inputs base-rust)))))
 
 (define-public rust-next
-  (let ((p (mk-public-rust rust-1.69)))
+  (let ((p (mk-public-rust rust-1.70)))
     (package
       (inherit p)
+      (name "rust-next")
       (arguments
        (substitute-keyword-arguments (package-arguments p)
          ((#:validate-runpath? _) #f)
          ((#:phases phases)
-          `(modify-phases ,phases
+          `(modify-phases
+               ,phases
+             (add-after 'disable-tests-requiring-git 'disable-more-tests-requiring-git
+               (lambda _                 
+                 (substitute* "src/tools/cargo/tests/testsuite/git.rs"
+                   (("fn fetch_downloads_with_git2_first_then_with_gitoxide_and_vice_versa")
+                    "#[ignore]\nfn fetch_downloads_with_git2_first_then_with_gitoxide_and_vice_versa"))))
              (replace 'disable-tests-requiring-mercurial
                (lambda _
                  (substitute*
-                   "src/tools/cargo/tests/testsuite/init/simple_hg_ignore_exists/mod.rs"
+                     "src/tools/cargo/tests/testsuite/init/simple_hg_ignore_exists/mod.rs"
                    (("fn case")
                     "#[ignore]\nfn case"))
                  (substitute*
-                   "src/tools/cargo/tests/testsuite/init/mercurial_autodetect/mod.rs"
+                     "src/tools/cargo/tests/testsuite/init/mercurial_autodetect/mod.rs"
                    (("fn case")
                     "#[ignore]\nfn case")))))))))))
