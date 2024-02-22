@@ -53,7 +53,7 @@
 (define-public linux-with-bpf
   (let ((configured
          (corrupt-linux linux-libre-with-bpf                 
-                        #:configs (cons* "CONFIG_DEBUG_INFO=y" "CONFIG_DEBUG_INFO_DWARF4=y" "CONFIG_DEBUG_INFO_BTF=y" (nonguix-extra-linux-options linux-libre-with-bpf)))))
+                        #:configs (cons* "CONFIG_BPF_JIT=y" "CONFIG_DEBUG_INFO=y" "CONFIG_DEBUG_INFO_DWARF4=y" "CONFIG_DEBUG_INFO_BTF=y" (nonguix-extra-linux-options linux-libre-with-bpf)))))
     (package
       (inherit configured)
       (inputs (modify-inputs (package-inputs configured)
