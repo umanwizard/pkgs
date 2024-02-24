@@ -4,7 +4,8 @@
   #:use-module (guix build-system cmake)
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages)
-  #:use-module (nongnu packages linux)
+  ;; #:use-module (nongnu packages linux)
+  #:use-module (gnu packages cpio)
   #:use-module (gnu packages linux)
   #:use-module (gnu packages python)
   #:use-module (gnu packages compression)
@@ -50,11 +51,24 @@
     (description "XXX")
     (license license:gpl2)))
 
-(define-public linux-with-bpf
-  (let ((configured
-         (corrupt-linux linux-libre-with-bpf                 
-                        #:configs (cons* "CONFIG_BPF_JIT=y" "CONFIG_DEBUG_INFO=y" "CONFIG_DEBUG_INFO_DWARF4=y" "CONFIG_DEBUG_INFO_BTF=y" (nonguix-extra-linux-options linux-libre-with-bpf)))))
+(define-public linux-libre-with-bpf
+  (let ((base-linux-libre
+         ((@@ (gnu packages linux) make-linux-libre*)
+          linux-libre-6.6-version
+          linux-libre-6.6-gnu-revision
+          linux-libre-6.6-source
+          '("x86_64-linux" "i686-linux" "armhf-linux"
+            "aarch64-linux" "powerpc64le-linux" "riscv64-linux")
+          #:extra-version "bpf"
+          #:configuration-file (@@ (gnu packages linux) kernel-config)
+          #:extra-options
+          (append (@@ (gnu packages linux) %bpf-extra-linux-options)
+                  (@@ (gnu packages linux) %default-extra-linux-options)))))
     (package
-      (inherit configured)
-      (inputs (modify-inputs (package-inputs configured)
-                (prepend (@ (gnu packages compression) zlib) python dwarves))))))
+      (inherit base-linux-libre)
+      (inputs (modify-inputs (package-inputs base-linux-libre)
+                (prepend cpio
+                         (@ (gnu packages compression) zlib) python dwarves)))
+      (synopsis "Linux-libre with BPF support")
+      (description "This package provides GNU Linux-Libre with support
+for @acronym{BPF, the Berkeley Packet Filter}."))))
