@@ -51,6 +51,33 @@
     (description "XXX")
     (license license:gpl2)))
 
+(define %bpf-extra-linux-options
+  `(;; Needed for probes
+    ("CONFIG_UPROBE_EVENTS" . #t)
+    ("CONFIG_KPROBE_EVENTS" . #t)
+    ;; kheaders module also helpful for tracing
+    ("CONFIG_IKHEADERS" . #t)
+    ("CONFIG_BPF" . #t)
+    ("CONFIG_BPF_SYSCALL" . #t)
+    ("CONFIG_BPF_JIT_ALWAYS_ON" . #t)
+    ;; optional, for tc filters
+    ("CONFIG_NET_CLS_BPF" . m)
+    ;; optional, for tc actions
+    ("CONFIG_NET_ACT_BPF" . m)
+    ("CONFIG_BPF_JIT" . #t)
+    ;; for Linux kernel versions 4.1 through 4.6
+    ;; ("CONFIG_HAVE_BPF_JIT" . y)
+    ;; for Linux kernel versions 4.7 and later
+    ("CONFIG_HAVE_EBPF_JIT" . #t)
+    ;; optional, for kprobes
+    ("CONFIG_BPF_EVENTS" . #t)
+    ;; kheaders module
+    ("CONFIG_IKHEADERS" . #t)
+    ;; BTF debug info, requires `pahole' from `dwarves' package
+    ("CONFIG_DEBUG_INFO=y" . #t)
+    ("CONFIG_DEBUG_INFO_DWARF4" . #t)
+    ("CONFIG_DEBUG_INFO_BTF" . #t)))
+
 (define-public linux-libre-with-bpf
   (let ((base-linux-libre
          ((@@ (gnu packages linux) make-linux-libre*)
@@ -62,7 +89,7 @@
           #:extra-version "bpf"
           #:configuration-file (@@ (gnu packages linux) kernel-config)
           #:extra-options
-          (append (@@ (gnu packages linux) %bpf-extra-linux-options)
+          (append %bpf-extra-linux-options
                   (@@ (gnu packages linux) %default-extra-linux-options)))))
     (package
       (inherit base-linux-libre)
